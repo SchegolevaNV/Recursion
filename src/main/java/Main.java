@@ -1,23 +1,35 @@
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 
 public class Main {
 
-    private static final Logger LOGGER = LogManager.getLogger(Main.class);
-    private static final Marker CORRECT_PICTURE_MARKER = MarkerManager.getMarker("CORRECT_PICTURE");
-    private static final Marker INVALID_PICTURE_MARKER = MarkerManager.getMarker("INVALID_PICTURE");
-    private static final String URL = "https://skillbox.ru/media";
+    protected static HashSet<String> copyUrl = new HashSet<>();
+    protected static final String URL = "https://skillbox.ru/";
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
         Node root = new Node(URL);
 
-        String list = new ForkJoinPool().invoke(new MapCreator(root));
-        System.out.println(list);
+        TreeSet<String> map = new ForkJoinPool().invoke(new MapCreator(root));
+        map.add(URL);
 
+        ArrayList<String> mapToFile = new ArrayList<>();
+        map.forEach(link -> {
+            int count = (int) link.chars().filter(num -> num == '/').count();
+            for (int i = 0; i < count - 3 ; i++) {
+                link = "\t".concat(link);
+            }
+            mapToFile.add(link);
+        });
+        try {
+            Files.write(Paths.get("/home/ariwenn/Documents/map.txt"), mapToFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
