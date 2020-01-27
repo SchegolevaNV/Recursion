@@ -1,13 +1,39 @@
-public class MapCreator extends Thread {
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.RecursiveTask;
 
-    private String url;
+public class MapCreator extends RecursiveTask<String> {
 
-    public MapCreator(String url) {
-    this.url = url;
+    private Node node;
+
+    public MapCreator(Node node) {
+        this.node = node;
     }
 
     @Override
-    public void run() {
-        super.run();
-    }
+    protected String compute() {
+
+        String root = node.getValue();
+        List<MapCreator> taskList = Collections.synchronizedList(new ArrayList<>());
+
+        try {
+            for (Node child : node.getChildren())
+                {
+                    MapCreator task = new MapCreator(child);
+                    task.fork();
+                    taskList.add(task);
+                }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (MapCreator task : taskList)
+        {
+            root = root.concat(task.join());
+        }
+
+        return root;
+   }
 }
