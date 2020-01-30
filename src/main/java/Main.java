@@ -1,22 +1,29 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ForkJoinPool;
 
 public class Main {
 
-    protected static HashSet<String> copyUrl = new HashSet<>();
     protected static final String URL = "https://skillbox.ru/";
 
     public static void main(String[] args) {
 
-        Node root = new Node(URL);
+        String root = URL;
+        ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
+        TreeSet<String> visitedLinks = new TreeSet();
+        QueueOfLinks queueOfLinks = new QueueOfLinks(queue, visitedLinks);
+        Set<String> map = null;
 
-        TreeSet<String> map = new ForkJoinPool().invoke(new MapCreator(root));
-        map.add(URL);
+        queueOfLinks.addLinkToQueue(root);
+        queueOfLinks.addToVisitedLinks(root);
+
+        if (queueOfLinks.getQueue().size() != 0)
+        {
+            map = new ForkJoinPool().invoke(new MapCreator(queueOfLinks));
+        }
 
         ArrayList<String> mapToFile = new ArrayList<>();
         map.forEach(link -> {
@@ -27,7 +34,7 @@ public class Main {
             mapToFile.add(link);
         });
         try {
-            Files.write(Paths.get("/home/ariwenn/Documents/map.txt"), mapToFile);
+            Files.write(Paths.get("C:/Users/SchegolevaNV2/Desktop/map.txt"), mapToFile);
         } catch (IOException e) {
             e.printStackTrace();
         }

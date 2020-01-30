@@ -3,65 +3,71 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.RecursiveTask;
 
 public class MapCreator extends RecursiveTask<TreeSet<String>> {
 
-    private Node node;
-    private TreeSet<String> map = new TreeSet<>();
+    private QueueOfLinks queueOfLinks;
 
-    public MapCreator(Node node) {
-        this.node = node;
+    public MapCreator(QueueOfLinks queueOfLinks) {
+        this.queueOfLinks = queueOfLinks;
     }
 
     @Override
-    protected TreeSet<String> compute() {
-
-        String root = node.getValue();
+    protected TreeSet<String> compute()
+    {
+        Set<String> buffer = Collections.synchronizedSet(new HashSet<>());
         List<MapCreator> taskList = new ArrayList<>();
 
-        Document doc = null;
-        try {
-            Thread.sleep(1000);
-            doc = Jsoup.connect(root).maxBodySize(0).get();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+        String root = queueOfLinks.getQueue().poll();
+
+        if (root == null)
+        {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            root = queueOfLinks.getQueue().poll();
         }
 
-        Elements elements = doc.select("a[abs:href^=https://skillbox.ru]").select("a[abs:href$=/]");
+        if (root != null)
+        {
+            Document doc = null;
+            try {
+                Thread.sleep(1000);
+                doc = Jsoup.connect(root).maxBodySize(0).get();
+            } catch (Exception e) {
+                e.getMessage();
+            }
 
-        for (Element element : elements) {
-            String child = element.absUrl("href");
-            if (addUrl(child)
-                    && !child.equals("https://skillbox.ru/media/topic//")
-                    && !child.equals("https://skillbox.ru/media/authors/eugenya-sycheva/")) {
-                node.children.add(new Node(child));
+            if (doc != null)
+            {
+                Elements elements = doc.select("a[abs:href^=https://skillbox.ru]").select("a[abs:href$=/]");
+
+                for (Element element : elements)
+                {
+                    String child = element.absUrl("href");
+                    if (queueOfLinks.getVisitedLinks().add(child))
+                    {
+                        queueOfLinks.addLinkToQueue(child);
+                        buffer.add(child);
+                    }
+                }
+
+                for (int i = 0; i < buffer.size(); i++) {
+                    MapCreator task = new MapCreator(queueOfLinks);
+                    task.fork();
+                    taskList.add(task);
+                }
+
+                for (MapCreator task : taskList)
+                {
+                    task.join();
+                }
             }
         }
-
-        for (Node child : node.getChildren()) {
-            map.add(child.getValue());
-        }
-
-        for (Node child : node.getChildren()) {
-            MapCreator task = new MapCreator(child);
-            task.fork();
-            taskList.add(task);
-        }
-
-        for (MapCreator task : taskList)
-        {
-            map.addAll(task.join());
-        }
-
-        return map;
-    }
-
-    private synchronized boolean addUrl (String url) {
-        return Main.copyUrl.add(url);
+        return queueOfLinks.getVisitedLinks();
     }
 }
