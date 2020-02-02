@@ -5,6 +5,7 @@ public class QueueOfLinks {
 
       private ConcurrentLinkedQueue<String> queue;
       private TreeSet<String> visitedLinks;
+      private String generalHost;
 
     public QueueOfLinks(ConcurrentLinkedQueue<String> queue, TreeSet<String> visitedLinks) {
         this.queue = queue;
@@ -23,7 +24,13 @@ public class QueueOfLinks {
         queue.add(link);
     }
 
-    public void addToVisitedLinks(String link) {
-        visitedLinks.add(link);
+    public void setGeneralHost(String generalHost)
+    {
+        this.generalHost = generalHost;
+    }
+
+    public String getGeneralHost()
+    {
+        return generalHost;
     }
 }

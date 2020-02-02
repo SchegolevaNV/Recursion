@@ -20,6 +20,7 @@ public class MapCreator extends RecursiveTask<TreeSet<String>> {
         Set<String> buffer = Collections.synchronizedSet(new HashSet<>());
         List<MapCreator> taskList = new ArrayList<>();
 
+        String generalHost = queueOfLinks.getGeneralHost();
         String root = queueOfLinks.getQueue().poll();
 
         if (root == null)
@@ -34,6 +35,7 @@ public class MapCreator extends RecursiveTask<TreeSet<String>> {
 
         if (root != null)
         {
+
             Document doc = null;
             try {
                 Thread.sleep(1000);
@@ -44,12 +46,16 @@ public class MapCreator extends RecursiveTask<TreeSet<String>> {
 
             if (doc != null)
             {
-                Elements elements = doc.select("a[abs:href^=https://skillbox.ru]").select("a[abs:href$=/]");
+                queueOfLinks.getVisitedLinks().add(root);
+
+                Elements elements = doc.select("a[abs:href$=/]");
 
                 for (Element element : elements)
                 {
                     String child = element.absUrl("href");
-                    if (queueOfLinks.getVisitedLinks().add(child))
+                    if (child.startsWith(generalHost)
+                            && !queueOfLinks.getVisitedLinks().contains(child)
+                            && !queueOfLinks.getQueue().contains(child))
                     {
                         queueOfLinks.addLinkToQueue(child);
                         buffer.add(child);

@@ -11,14 +11,14 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String root = URL;
         ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
         TreeSet<String> visitedLinks = new TreeSet();
-        QueueOfLinks queueOfLinks = new QueueOfLinks(queue, visitedLinks);
         Set<String> map = null;
 
+        String root = URL;
+        QueueOfLinks queueOfLinks = new QueueOfLinks(queue, visitedLinks);
         queueOfLinks.addLinkToQueue(root);
-        queueOfLinks.addToVisitedLinks(root);
+        queueOfLinks.setGeneralHost(root);
 
         if (queueOfLinks.getQueue().size() != 0)
         {
@@ -34,7 +34,7 @@ public class Main {
             mapToFile.add(link);
         });
         try {
-            Files.write(Paths.get("C:/Users/SchegolevaNV2/Desktop/map.txt"), mapToFile);
+            Files.write(Paths.get("/home/ariwenn/Documents/map.txt"), mapToFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
